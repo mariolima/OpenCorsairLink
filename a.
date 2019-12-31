@@ -1,0 +1,26 @@
+{
+	'vendor': 'CORSAIR',
+	'product': 'HX850i',
+	'firmware': 'NA',
+	'temperature 0': '39.41 C',
+	'temperature 1': '34.29 C',
+	'powered': '399367 (4d.  14h)',
+	'uptime': '3367 (0d.  0h)',
+	'supply_voltage': '230.00 V',
+	'total_watts': '48.00 W',
+	'output_12v':{
+		'voltage': '12.16',
+		'amps': ' 3.00',
+		'watts': '36.00'
+	},
+	'output_5v':{
+		'voltage': ' 5.03',
+		'amps': ' 1.88',
+		'watts': ' 9.00'
+	},
+	'output_3.3v':{
+		'voltage': ' 3.31',
+		'amps': ' 0.62',
+		'watts': ' 2.00'
+	}
+}

@@ -30,7 +30,7 @@
 #include <unistd.h>
 
 int
-psu_settings(
+psu_settings_alt(
     struct corsair_device_scan scanned_device,
     struct option_flags flags,
     struct option_parse_return settings )
@@ -102,6 +102,87 @@ psu_settings(
         rr = dev->driver->power.wattage( dev, handle, ii, &output_watts );
         msg_info( "\tWatts %5.2f W\n", output_watts );
     }
+    rr = dev->driver->power.sensor_select( dev, handle, 0 );
+
+    rr = dev->lowlevel->deinit( handle, dev->write_endpoint );
+
+    return 0;
+}
+
+int
+psu_settings(
+    struct corsair_device_scan scanned_device,
+    struct option_flags flags,
+    struct option_parse_return settings )
+{
+    int rr;
+    int ii;
+    char name[32];
+    name[sizeof( name ) - 1] = 0;
+    uint32_t time = 0;
+    double supply_volts, supply_watts, temperature, output_volts, output_amps, output_watts;
+    struct corsair_device_info* dev;
+    struct libusb_device_handle* handle;
+
+    dev = scanned_device.device;
+    handle = scanned_device.handle;
+
+    rr = dev->lowlevel->init( handle, dev->write_endpoint );
+
+    /* fetch device name, vendor name, product name */
+    rr = dev->driver->name( dev, handle, name, sizeof( name ) );
+    rr = dev->driver->vendor( dev, handle, name, sizeof( name ) );
+    msg_info( "{\n");
+    msg_info( "\"vendor\": \"%s\",\n", name );
+    rr = dev->driver->product( dev, handle, name, sizeof( name ) );
+    msg_info( "\"product\": \"%s\",\n", name );
+    rr = dev->driver->fw_version( dev, handle, name, sizeof( name ) );
+    msg_info( "\"firmware\": \"%s\",\n", name );
+
+    /* fetch temperatures */
+    for ( ii = 0; ii < 2; ii++ )
+    {
+        rr = dev->driver->temperature.read( dev, handle, ii, &temperature );
+        msg_info( "\"temperature_%d\": \"%5.2f\",\n", ii, temperature );
+    }
+
+    /* fetch device powered time and device uptime */
+    rr = dev->driver->psu_time.powered( dev, handle, &time );
+    msg_info( "\"powered\": \"%u\",\n", time);
+    rr = dev->driver->psu_time.uptime( dev, handle, &time );
+    msg_info( "\"uptime\": \"%u\",\n", time);
+
+    /* fetch Supply Voltage and Total Watts Consumming */
+    rr = dev->driver->power.supply_voltage( dev, handle, &supply_volts );
+    msg_info( "\"supply_voltage\": \"%5.2f\",\n", supply_volts );
+    rr = dev->driver->power.total_wattage( dev, handle, &supply_watts );
+    msg_info( "\"total_watts\": \"%5.2f\",\n", supply_watts );
+
+    /* fetch PSU output */
+    for ( ii = 0; ii < 3; ii++ )
+    {
+        if ( ii == 0 )
+            msg_info( "\"output_12v\":{\n" );
+        if ( ii == 1 )
+            msg_info( "\"output_5v\":{\n" );
+        if ( ii == 2 )
+            msg_info( "\"output_3.3v\":{\n" );
+
+        rr = dev->driver->power.sensor_select( dev, handle, ii );
+        rr = dev->driver->power.voltage( dev, handle, ii, &output_volts );
+        msg_info( "\t\"voltage\":\"%5.2f\",\n", output_volts );
+
+        rr = dev->driver->power.amperage( dev, handle, ii, &output_amps );
+        msg_info( "\t\"amps\":\"%5.2f\",\n", output_amps );
+
+        rr = dev->driver->power.wattage( dev, handle, ii, &output_watts );
+        msg_info( "\t\"watts\":\"%5.2f\"\n", output_watts );
+        if ( ii == 2 )
+        	msg_info( "}\n" );
+		else
+        	msg_info( "},\n" );
+    }
+    msg_info( "}\n" );
     rr = dev->driver->power.sensor_select( dev, handle, 0 );
 
     rr = dev->lowlevel->deinit( handle, dev->write_endpoint );

@@ -125,7 +125,7 @@ corsairlink_device_scanner( libusb_context* context, int* _scanlist_count )
                          * of the device connections
                          */
                         scanlist[scanlist_count].device = device;
-                        msg_info(
+                        msg_debug(
                             "Dev=%d, CorsairLink Device Found: %s!\n", scanlist_count,
                             device->name );
                         scanlist_count++;
